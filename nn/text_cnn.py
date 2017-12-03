@@ -19,9 +19,9 @@ threshold = 0.2
 class TextCNN(object):
     def __init__(self, embeddings):
         weights = {
-            'wc1': tf.Variable(tf.truncated_normal([filter_sizes[0], embedding_size, filter_num], stddev=0.1)),
-            'wc2': tf.Variable(tf.truncated_normal([filter_sizes[1], embedding_size, filter_num], stddev=0.1)),
-            'wc3': tf.Variable(tf.truncated_normal([filter_sizes[2], embedding_size, filter_num], stddev=0.1))
+            'wc1': tf.Variable(tf.truncated_normal([filter_sizes[0], embedding_size, filter_num], stddev=0.01)),
+            'wc2': tf.Variable(tf.truncated_normal([filter_sizes[1], embedding_size, filter_num], stddev=0.01)),
+            'wc3': tf.Variable(tf.truncated_normal([filter_sizes[2], embedding_size, filter_num], stddev=0.01))
         }
 
         biases = {
@@ -49,8 +49,8 @@ class TextCNN(object):
             #                                     activation_fn=None)
 
             output = layers.fully_connected(x_convs, class_num,
-                                            weights_initializer=tf.truncated_normal_initializer(stddev=0.1),
-                                            biases_initializer=tf.truncated_normal_initializer(stddev=0.1),
+                                            weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
+                                            biases_initializer=tf.truncated_normal_initializer(stddev=0.01),
                                             activation_fn=None)
 
             self.loss_cnn = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y, logits=output))
