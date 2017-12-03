@@ -10,7 +10,7 @@ cnn_feature_size = 128
 sequence_lens = 700
 class_num = 6984
 filter_num = 96
-learning_rate = 0.001
+learning_rate = 0.0005
 # fixed size 3
 filter_sizes = [2, 3, 4]
 threshold = 0.2
@@ -19,9 +19,9 @@ threshold = 0.2
 class TextCNN(object):
     def __init__(self, embeddings):
         weights = {
-            'wc1': tf.Variable(tf.truncated_normal([filter_sizes[0], embedding_size, filter_num], stddev=0.01)),
-            'wc2': tf.Variable(tf.truncated_normal([filter_sizes[1], embedding_size, filter_num], stddev=0.01)),
-            'wc3': tf.Variable(tf.truncated_normal([filter_sizes[2], embedding_size, filter_num], stddev=0.01))
+            'wc1': tf.Variable(tf.truncated_normal([filter_sizes[0], embedding_size, filter_num], stddev=0.1)),
+            'wc2': tf.Variable(tf.truncated_normal([filter_sizes[1], embedding_size, filter_num], stddev=0.1)),
+            'wc3': tf.Variable(tf.truncated_normal([filter_sizes[2], embedding_size, filter_num], stddev=0.1))
         }
 
         biases = {
@@ -49,8 +49,8 @@ class TextCNN(object):
             #                                     activation_fn=None)
 
             output = layers.fully_connected(x_convs, class_num,
-                                            weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
-                                            biases_initializer=tf.truncated_normal_initializer(stddev=0.01),
+                                            weights_initializer=tf.truncated_normal_initializer(stddev=0.1),
+                                            biases_initializer=tf.truncated_normal_initializer(stddev=0.1),
                                             activation_fn=None)
 
             self.loss_cnn = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y, logits=output))
