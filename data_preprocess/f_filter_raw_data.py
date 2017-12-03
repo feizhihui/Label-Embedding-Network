@@ -15,8 +15,8 @@ with open('../PKL/lookup_dict.pkl', 'rb') as file:
 all_text = []
 all_code = []
 
-with open('../DATA/MIMIC3_RAW_DSUMS') as f:
-    for i, line in enumerate(f):
+with open('../DATA/MIMIC3_RAW_DSUMS') as file:
+    for i, line in enumerate(file.readlines()[1:]):
         rows = line.split('|')
         raw_dsum = rows[6]
         codes = rows[5].strip('"').split(',')
