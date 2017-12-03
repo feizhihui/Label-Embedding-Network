@@ -11,8 +11,7 @@ Reader = data_input.data_master()
 
 batch_size = 256  # 512
 epoch_num_cnn = 20
-keep_pro = 0.75
-
+keep_pro = 0.5
 model = TextCNN(Reader.embeddings)
 
 
