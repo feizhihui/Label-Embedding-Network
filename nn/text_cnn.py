@@ -41,9 +41,6 @@ class TextCNN(object):
         print('after multiply convolutions: ', x_convs)
         x_convs = tf.reshape(x_convs, [-1, 3 * filter_num])
 
-        ones = tf.ones_like(self.y)
-        zeros = tf.zeros_like(self.y)
-
         with tf.name_scope("CNN_Part"):
             x_convs = tf.nn.dropout(x_convs, self.dropout_keep_prob)
             logits_cnn = layers.fully_connected(x_convs, cnn_feature_size,
@@ -59,6 +56,8 @@ class TextCNN(object):
             self.loss_cnn = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y, logits=output))
             self.optimizer_cnn = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(self.loss_cnn)
             self.score_cnn = tf.nn.sigmoid(output)
+            ones = tf.ones_like(self.score_cnn)
+            zeros = tf.zeros_like(ones)
             self.prediction_cnn = tf.cast(tf.where(tf.greater(self.score_cnn, threshold), ones, zeros), tf.int32)
 
     def conv1d(sef, x, W, b):
