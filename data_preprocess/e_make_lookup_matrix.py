@@ -4,12 +4,14 @@ import numpy as np
 
 lookup_dict = dict()
 lookup_matrix = []
+lookup_dict['#PADDING#'] = 0
+lookup_matrix.append([0] * 128)
 with open('../DATA/embeddings.128', 'r') as file:
     for rowid, line in enumerate(file.readlines()[1:]):
         columns = line.split()
         word = columns[0]
         embedding_vector = columns[1:]
-        lookup_dict[word] = rowid
+        lookup_dict[word] = rowid + 1
         lookup_matrix.append(embedding_vector)
 
 with open('../PKL/lookup_dict.pkl', 'wb') as file:
