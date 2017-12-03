@@ -4,7 +4,7 @@ import pickle
 corpus = []
 with open('../DATA/MIMIC3_RAW_DSUMS', 'r') as file:
     # file.write('"subject_id"|"hadm_id"|"charttime"|"category"|"title"|"icd9_codes"|"text"\n')
-    for line in file.readlines():
+    for line in file.readlines()[1:]:
         text = line.split('|')[6]
         corpus.append(text.split())
 

@@ -10,21 +10,20 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 Reader = data_input.data_master()
 
 batch_size = 256  # 512
-epoch_num_cnn = 13
+epoch_num_cnn = 1
 keep_pro = 0.9
 
 model = TextCNN(Reader.embeddings)
 
 
-def validataion(model_prediction):
+def validataion():
     # model.prediction_fused
     print('begin to test:')
     test_Y = Reader.mapping_multi_hot(Reader.test_Y)
-    step_size = 300
     outputs = []
-    for i in range(0, len(Reader.test_X), step_size):
-        test_X_batch = Reader.mapping_sequence(Reader.test_X[i:i + step_size])
-        output = sess.run(model_prediction,
+    for i in range(0, len(Reader.test_X), batch_size):
+        test_X_batch = Reader.mapping_sequence(Reader.test_X[i:i + batch_size])
+        output = sess.run(model.prediction_cnn,
                           feed_dict={model.x: test_X_batch, model.dropout_keep_prob: 1.0})
         outputs.append(output)
 
@@ -76,4 +75,4 @@ with tf.Session() as sess:
                 print("epoch:%d  iter:%d, mean loss:%.3f,  PNum:%.2f, TNum:%.2f" % (
                     epoch + 1, iter + 1, loss, P_NUM, T_NUM))
                 print("Micro-Precision:%.3f, Micro-Recall:%.3f, Micro-F Measure:%.3f" % (MiP, MiR, MiF))
-    validataion(model.prediction_cnn)
+    validataion()
