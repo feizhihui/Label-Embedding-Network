@@ -21,7 +21,6 @@ class data_master:
         with open('../PKL/all_code.pkl', 'rb') as file:
             all_code = pickle.load(file)
 
-        print(type(all_text))
         all_text = np.array(all_text)
         all_code = np.array(all_code)
 

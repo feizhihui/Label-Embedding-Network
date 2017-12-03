@@ -5,8 +5,7 @@ diagnosisFile = '../DATA/DIAGNOSES_ICD.csv'
 hadm2codes = dict()
 code_dict = dict()
 with open(diagnosisFile, 'r') as file:
-    file.readline()
-    for line in file.readlines():
+    for line in file.readlines()[1:]:
         tokens = line.strip().split(',')
         hadm_id = tokens[2]
         icd9code = tokens[4].strip('"')
@@ -22,8 +21,6 @@ print(len(hadm2codes))
 print(len(code_dict))
 with open('../PKL/hadm2codes.pkl', 'wb') as file:
     pickle.dump(hadm2codes, file)
-
-import operator
 
 code_sort = sorted(code_dict.items(), key=lambda x: x[1], reverse=True)
 print(code_sort)

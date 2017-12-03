@@ -10,7 +10,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 Reader = data_input.data_master()
 
 batch_size = 256  # 512
-epoch_num_cnn = 22
+epoch_num_cnn = 13
 keep_pro = 0.9
 
 model = TextCNN(Reader.embeddings)
@@ -23,7 +23,7 @@ def validataion(model_prediction):
     step_size = 300
     outputs = []
     for i in range(0, len(Reader.test_X), step_size):
-        test_X_batch = Reader.test_X[i:i + step_size]
+        test_X_batch = Reader.mapping_sequence(Reader.test_X[i:i + step_size])
         output = sess.run(model_prediction,
                           feed_dict={model.x: test_X_batch, model.dropout_keep_prob: 1.0})
         outputs.append(output)
