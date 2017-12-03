@@ -6,6 +6,7 @@ lookup_dict = dict()
 lookup_matrix = []
 lookup_dict['#PADDING#'] = 0
 lookup_matrix.append([0] * 128)
+
 with open('../DATA/embeddings.128', 'r') as file:
     for rowid, line in enumerate(file.readlines()[1:]):
         columns = line.split()
