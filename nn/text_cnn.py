@@ -3,12 +3,11 @@ import tensorflow as tf
 from tensorflow.contrib import layers
 import numpy as np
 
-embedding_size = 100
-doc_embedding_size = 128
-doc_feature_size = 64
+embedding_size = 128
+
 cnn_feature_size = 128
 
-time_steps = 700
+sequence_lens = 700
 class_num = 6984
 filter_num = 96
 learning_rate = 0.005
@@ -33,7 +32,7 @@ class TextCNN(object):
 
         # define placehold
         W = tf.Variable(embeddings, name="W", dtype=tf.float32)
-        self.x = tf.placeholder(tf.int32, [None, time_steps])
+        self.x = tf.placeholder(tf.int32, [None, sequence_lens])
         x_emb = tf.nn.embedding_lookup(W, self.x)
         self.y = tf.placeholder(tf.float32, [None, class_num])
         self.dropout_keep_prob = tf.placeholder(tf.float32, name="dropout_keep_prob")
@@ -63,7 +62,7 @@ class TextCNN(object):
             self.prediction_cnn = tf.cast(tf.where(tf.greater(self.score_cnn, threshold), ones, zeros), tf.int32)
 
     def conv1d(sef, x, W, b):
-        x = tf.reshape(x, shape=[-1, time_steps, embedding_size])
+        x = tf.reshape(x, shape=[-1, sequence_lens, embedding_size])
         x = tf.nn.conv1d(x, W, 1, padding='SAME')
         x = tf.nn.bias_add(x, b)
         # shape=(n,time_steps,filter_num)

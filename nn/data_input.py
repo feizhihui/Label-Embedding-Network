@@ -35,7 +35,7 @@ class data_master:
         self.train_size = boundary
 
     def shuffle(self):
-        permutation = np.random.randint(self.train_size, self.train_size)
+        permutation = np.random.randint(self.train_size, size=self.train_size)
         self.train_X = self.train_X[permutation]
         self.train_Y = self.train_Y[permutation]
 
@@ -57,7 +57,10 @@ class data_master:
 
 
 if __name__ == '__main__':
-    master = data_master()
-    print(master.test_X)
-    print(master.test_Y)
-    print(len(master.test_Y))
+    dataReader = data_master()
+    print(dataReader.test_X)
+    print(dataReader.test_Y)
+    print(len(dataReader.test_Y))
+    dataReader.shuffle()
+    print(dataReader.mapping_sequence(dataReader.test_X))
+    print(dataReader.mapping_multi_hot(dataReader.test_Y))
