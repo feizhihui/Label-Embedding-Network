@@ -43,14 +43,10 @@ class TextCNN(object):
         with tf.name_scope("CNN_Part"):
             x_convs = tf.nn.dropout(x_convs, self.dropout_keep_prob)
             print('x_convs:', x_convs)
-            logits_cnn = layers.fully_connected(x_convs, cnn_feature_size,
-                                                weights_initializer=tf.truncated_normal_initializer(stddev=0.1),
-                                                biases_initializer=tf.truncated_normal_initializer(stddev=0.1),
-                                                activation_fn=tf.nn.tanh)  # tf.nn.relu
 
-            output = layers.fully_connected(logits_cnn, class_num,
+            output = layers.fully_connected(x_convs, class_num,
                                             weights_initializer=tf.truncated_normal_initializer(stddev=0.1),
-                                            biases_initializer=tf.truncated_normal_initializer(stddev=0.1),
+                                            biases_initializer=tf.zeros_initializer(),
                                             activation_fn=None)
 
             self.loss_cnn = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y, logits=output))

@@ -9,8 +9,8 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 Reader = data_input.data_master()
 
-batch_size = 256  # 512
-epoch_num_cnn = 35
+batch_size = 256
+epoch_num_cnn = 30
 keep_pro = 0.9
 model = TextCNN(Reader.embeddings)
 
@@ -19,7 +19,7 @@ def validataion():
     # model.prediction_fused
     print('begin to test:')
     outputs = []
-    for i in range(0, len(Reader.test_X), batch_size):
+    for i in range(0, Reader.test_size, batch_size):
         test_X_batch = Reader.test_X[i:i + batch_size]
         output = sess.run(model.prediction_cnn,
                           feed_dict={model.x: test_X_batch, model.dropout_keep_prob: 1.0})

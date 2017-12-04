@@ -5,7 +5,7 @@ import random
 
 sequence_lens = 700
 class_num = 6984
-train_eval_split_line = 0.9
+train_eval_split_line = 0.95863
 shuffle = False
 
 
@@ -32,8 +32,10 @@ class data_master:
         self.test_Y = self.all_code[boundary:]
 
         self.train_size = boundary
+        self.test_size = len(all_text) - self.train_size
+
         print('training size:', self.train_size)
-        print('eval size:', len(all_text) - self.train_size)
+        print('eval size:', self.test_size)
         print(self.train_X.shape)
 
     def shuffle(self):
