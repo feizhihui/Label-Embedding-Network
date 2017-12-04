@@ -46,7 +46,7 @@ class TextCNN(object):
             logits_cnn = layers.fully_connected(x_convs, cnn_feature_size,
                                                 weights_initializer=tf.truncated_normal_initializer(stddev=0.1),
                                                 biases_initializer=tf.truncated_normal_initializer(stddev=0.1),
-                                                activation_fn=None)  # tf.nn.relu
+                                                activation_fn=tf.nn.tanh)  # tf.nn.relu
 
             output = layers.fully_connected(logits_cnn, class_num,
                                             weights_initializer=tf.truncated_normal_initializer(stddev=0.1),

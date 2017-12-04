@@ -10,7 +10,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 Reader = data_input.data_master()
 
 batch_size = 256  # 512
-epoch_num_cnn = 30
+epoch_num_cnn = 35
 keep_pro = 0.9
 model = TextCNN(Reader.embeddings)
 
