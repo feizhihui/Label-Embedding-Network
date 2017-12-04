@@ -34,9 +34,11 @@ class data_master:
         self.train_size = boundary
         print('training size:', self.train_size)
         print('eval size:', len(all_text) - self.train_size)
+        print(self.train_X.shape)
 
     def shuffle(self):
-        permutation = random.shuffle(list(range(self.train_size)))
+        permutation = list(range(self.train_size))
+        random.shuffle(permutation)
         self.train_X = self.train_X[permutation]
         self.train_Y = self.train_Y[permutation]
 
