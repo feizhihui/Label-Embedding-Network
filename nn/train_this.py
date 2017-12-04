@@ -10,7 +10,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 Reader = data_input.data_master()
 
 batch_size = 256  # 512
-epoch_num_cnn = 20
+epoch_num_cnn = 25
 keep_pro = 0.9
 model = TextCNN(Reader.embeddings)
 
@@ -73,5 +73,5 @@ with tf.Session() as sess:
                 print("epoch:%d  iter:%d, mean loss:%.3f,  PNum:%.2f, TNum:%.2f" % (
                     epoch + 1, iter + 1, loss, P_NUM, T_NUM))
                 print("Micro-Precision:%.3f, Micro-Recall:%.3f, Micro-F Measure:%.3f" % (MiP, MiR, MiF))
-        if epoch >= 17:
+        if epoch >= 15:
             validataion()
