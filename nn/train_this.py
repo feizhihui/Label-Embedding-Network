@@ -9,9 +9,11 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 Reader = data_input.data_master()
 
+learning_rate = 0.005
 batch_size = 256
 epoch_num_cnn = 30
 keep_pro = 0.9
+
 model = TextCNN(Reader.embeddings)
 
 
@@ -61,12 +63,13 @@ with tf.Session() as sess:
     print('pretraining CNN Part')
     for epoch in range(epoch_num_cnn):
         Reader.shuffle()
+        learning_rate = learning_rate * (0.95 ** epoch)
         for iter, idx in enumerate(range(0, Reader.train_size, batch_size)):
             batch_X = Reader.train_X[idx:idx + batch_size]
             batch_Y = Reader.train_Y[idx:idx + batch_size]
             loss, output, _ = sess.run([model.loss_cnn, model.prediction_cnn, model.optimizer_cnn],
                                        feed_dict={model.x: batch_X, model.y: batch_Y,
-                                                  model.dropout_keep_prob: keep_pro})
+                                                  model.dropout_keep_prob: keep_pro, model.lr: learning_rate})
             if iter % 100 == 0:
                 print("===CNNPart===")
                 MiP, MiR, MiF, P_NUM, T_NUM = micro_score(output, batch_Y)

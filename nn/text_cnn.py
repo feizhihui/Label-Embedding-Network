@@ -1,6 +1,7 @@
 # encoding=utf-8
 import tensorflow as tf
 from tensorflow.contrib import layers
+import numpy as np
 
 embedding_size = 128
 
@@ -9,7 +10,7 @@ cnn_feature_size = 64
 sequence_lens = 700
 class_num = 6984
 filter_num = 64
-learning_rate = 0.005
+# learning_rate = 0.005
 # fixed size 3
 filter_sizes = [1, 3, 5]
 threshold = 0.2
@@ -32,11 +33,12 @@ class TextCNN(object):
         # define placehold
         W = tf.Variable(embeddings, name="W", dtype=tf.float32)
         self.x = tf.placeholder(tf.int32, [None, sequence_lens])
-        x_emb = tf.nn.embedding_lookup(W, self.x)
         self.y = tf.placeholder(tf.float32, [None, class_num])
+        self.lr = tf.placeholder(tf.float32)
         self.dropout_keep_prob = tf.placeholder(tf.float32, name="dropout_keep_prob")
 
-        x_convs = self.multi_conv(x_emb, weights, biases)
+        embeddings = tf.nn.embedding_lookup(W, self.x)
+        x_convs = self.multi_conv(embeddings, weights, biases)
         print('after multiply convolutions: ', x_convs)
         x_convs = tf.reshape(x_convs, [-1, 3 * filter_num])
 
@@ -45,12 +47,13 @@ class TextCNN(object):
             print('x_convs:', x_convs)
 
             output = layers.fully_connected(x_convs, class_num,
-                                            weights_initializer=tf.truncated_normal_initializer(stddev=0.1),
+                                            weights_initializer=tf.truncated_normal_initializer(
+                                                stddev=np.sqrt(2. / (3 * filter_num))),  # He Normalization
                                             biases_initializer=tf.zeros_initializer(),
                                             activation_fn=None)
 
             self.loss_cnn = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y, logits=output))
-            self.optimizer_cnn = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(self.loss_cnn)
+            self.optimizer_cnn = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(self.loss_cnn)
             self.score_cnn = tf.nn.sigmoid(output)
             ones = tf.ones_like(self.score_cnn)
             zeros = tf.zeros_like(ones)
