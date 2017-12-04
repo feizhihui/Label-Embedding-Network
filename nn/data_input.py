@@ -21,24 +21,30 @@ class data_master:
         with open('../PKL/all_code.pkl', 'rb') as file:
             all_code = pickle.load(file)
 
-        all_text = np.array(all_text)
-        all_code = np.array(all_code)
+        self.all_text = np.array(all_text)
+        self.all_code = np.array(all_code)
+        self.shuffle(shuffle_all=True)
 
         boundary = int(train_eval_split_line * len(all_text))
-        self.train_X = all_text[:boundary]
-        self.train_Y = all_code[:boundary]
+        self.train_X = self.all_text[:boundary]
+        self.train_Y = self.all_code[:boundary]
 
-        self.test_X = all_text[boundary:]
-        self.test_Y = all_code[boundary:]
+        self.test_X = self.all_text[boundary:]
+        self.test_Y = self.all_code[boundary:]
 
         self.train_size = boundary
         print('training size:', self.train_size)
         print('eval size:', len(all_text) - self.train_size)
 
-    def shuffle(self):
-        permutation = np.random.randint(self.train_size, size=self.train_size)
-        self.train_X = self.train_X[permutation]
-        self.train_Y = self.train_Y[permutation]
+    def shuffle(self, shuffle_all=False):
+        if shuffle_all:
+            permutation = np.random.randint(len(self.all_text), len(self.all_text))
+            self.all_text = self.train_X[permutation]
+            self.all_code = self.train_Y[permutation]
+        else:
+            permutation = np.random.randint(self.train_size, size=self.train_size)
+            self.train_X = self.train_X[permutation]
+            self.train_Y = self.train_Y[permutation]
 
     def mapping_sequence(self, batch_X):
         batch_X_matrix = np.zeros([len(batch_X), sequence_lens], dtype=np.int32)
