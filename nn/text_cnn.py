@@ -48,7 +48,7 @@ class TextCNN(object):
 
             output = layers.fully_connected(x_convs, class_num,
                                             weights_initializer=tf.truncated_normal_initializer(
-                                                stddev=np.sqrt(2. / (3 * filter_num))),  # He Normalization
+                                                stddev=np.sqrt(2. / (3 * filter_num))),  # He_Normalization
                                             biases_initializer=tf.zeros_initializer(),
                                             activation_fn=None)
 
