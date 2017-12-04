@@ -32,6 +32,8 @@ class data_master:
         self.test_Y = all_code[boundary:]
 
         self.train_size = boundary
+        print('training size:', self.train_size)
+        print('eval size:', len(all_text) - self.train_size)
 
     def shuffle(self):
         permutation = np.random.randint(self.train_size, size=self.train_size)
