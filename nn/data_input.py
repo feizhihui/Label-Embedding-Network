@@ -38,7 +38,7 @@ class data_master:
 
     def shuffle(self, shuffle_all=False):
         if shuffle_all:
-            permutation = np.random.randint(len(self.all_text), len(self.all_text))
+            permutation = np.random.randint(len(self.all_text), size=len(self.all_text))
             self.all_text = self.train_X[permutation]
             self.all_code = self.train_Y[permutation]
         else:
