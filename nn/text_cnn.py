@@ -1,7 +1,6 @@
 # encoding=utf-8
 import tensorflow as tf
 from tensorflow.contrib import layers
-import numpy as np
 
 embedding_size = 128
 
@@ -10,7 +9,7 @@ cnn_feature_size = 128
 sequence_lens = 700
 class_num = 6984
 filter_num = 96
-learning_rate = 0.001
+learning_rate = 0.005
 # fixed size 3
 filter_sizes = [2, 3, 4]
 threshold = 0.2
@@ -43,6 +42,7 @@ class TextCNN(object):
 
         with tf.name_scope("CNN_Part"):
             x_convs = tf.nn.dropout(x_convs, self.dropout_keep_prob)
+            print('x_convs:', x_convs)
             # logits_cnn = layers.fully_connected(x_convs, cnn_feature_size,
             #                                     weights_initializer=tf.truncated_normal_initializer(stddev=0.1),
             #                                     biases_initializer=tf.truncated_normal_initializer(stddev=0.1),

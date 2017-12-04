@@ -1,22 +1,22 @@
 # encoding=utf-8
 import tensorflow as tf
-import data_input
+import data_input2
 from text_cnn import TextCNN
 import numpy as np
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
-Reader = data_input.data_master()
+Reader = data_input2.data_master()
 
-batch_size = 256  # 512
+batch_size = 256
 epoch_num_cnn = 20
 keep_pro = 0.9
+
 model = TextCNN(Reader.embeddings)
 
 
 def validataion():
-    # model.prediction_fused
     print('begin to test:')
     outputs = []
     for i in range(0, len(Reader.test_X), batch_size):
@@ -30,12 +30,13 @@ def validataion():
     MiP, MiR, MiF, P_NUM, T_NUM = micro_score(outputs, Reader.test_Y)
     print(">>>>>> Final Result:  PredictNum:%.2f, TrueNum:%.2f" % (P_NUM, T_NUM))
     print(">>>>>> Micro-Precision:%.3f, Micro-Recall:%.3f, Micro-F Measure:%.3f" % (MiP, MiR, MiF))
-    # MaP, MaR, MaF = macro_score(outputs, test_labels)
+    # MaP, MaR, MaF = macro_score(outputs, Reader.test_labels)
     # print(">>>>>> Macro-Precision:%.3f, Macro-Recall:%.3f, Macro-F Measure:%.3f" % (MaP, MaR, MaF))
 
 
 def micro_score(output, label):
     N = len(output)
+    # K = len(output[0])
     total_P = np.sum(output)
     total_R = np.sum(label)
     TP = float(np.sum(output * label))
@@ -57,21 +58,20 @@ def macro_score(output, label):
 
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
-
     print('pretraining CNN Part')
     for epoch in range(epoch_num_cnn):
         Reader.shuffle()
         for iter, idx in enumerate(range(0, Reader.train_size, batch_size)):
-            batch_X = Reader.train_X[idx:idx + batch_size]
-            batch_Y = Reader.train_Y[idx:idx + batch_size]
-            loss, output, _ = sess.run([model.loss_cnn, model.prediction_cnn, model.optimizer_cnn],
-                                       feed_dict={model.x: batch_X, model.y: batch_Y,
-                                                  model.dropout_keep_prob: keep_pro})
+            batch_x = Reader.train_X[idx:idx + batch_size]
+            batch_y = Reader.train_Y[idx:idx + batch_size]
+            loss_fetch, output, _ = sess.run([model.loss_cnn, model.prediction_cnn, model.optimizer_cnn],
+                                             feed_dict={model.x: batch_x, model.y: batch_y,
+                                                        model.dropout_keep_prob: keep_pro})
             if iter % 100 == 0:
                 print("===CNNPart===")
-                MiP, MiR, MiF, P_NUM, T_NUM = micro_score(output, batch_Y)
+                MiP, MiR, MiF, P_NUM, T_NUM = micro_score(output, batch_y)
                 print("epoch:%d  iter:%d, mean loss:%.3f,  PNum:%.2f, TNum:%.2f" % (
-                    epoch + 1, iter + 1, loss, P_NUM, T_NUM))
+                    epoch + 1, iter + 1, loss_fetch, P_NUM, T_NUM))
                 print("Micro-Precision:%.3f, Micro-Recall:%.3f, Micro-F Measure:%.3f" % (MiP, MiR, MiF))
         if epoch >= 17:
             validataion()

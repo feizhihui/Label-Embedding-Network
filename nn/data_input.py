@@ -21,9 +21,8 @@ class data_master:
         with open('../PKL/all_code.pkl', 'rb') as file:
             all_code = pickle.load(file)
 
-        self.all_text = np.array(all_text)
-        self.all_code = np.array(all_code)
-        self.shuffle(shuffle_all=True)
+        self.all_text = self.mapping_sequence(all_text)
+        self.all_code = self.mapping_multi_hot(all_code)
 
         boundary = int(train_eval_split_line * len(all_text))
         self.train_X = self.all_text[:boundary]
@@ -36,15 +35,10 @@ class data_master:
         print('training size:', self.train_size)
         print('eval size:', len(all_text) - self.train_size)
 
-    def shuffle(self, shuffle_all=False):
-        if shuffle_all:
-            permutation = np.random.randint(len(self.all_text), size=len(self.all_text))
-            self.all_text = self.train_X[permutation]
-            self.all_code = self.train_Y[permutation]
-        else:
-            permutation = np.random.randint(self.train_size, size=self.train_size)
-            self.train_X = self.train_X[permutation]
-            self.train_Y = self.train_Y[permutation]
+    def shuffle(self):
+        permutation = random.shuffle(list(range(self.train_size)))
+        self.train_X = self.train_X[permutation]
+        self.train_Y = self.train_Y[permutation]
 
     def mapping_sequence(self, batch_X):
         batch_X_matrix = np.zeros([len(batch_X), sequence_lens], dtype=np.int32)
@@ -60,6 +54,7 @@ class data_master:
             for code in code_set:
                 code = self.code_dict[code]
                 batch_Y_matrix[i, code] = 1
+
         return batch_Y_matrix
 
 
