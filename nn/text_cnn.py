@@ -4,14 +4,14 @@ from tensorflow.contrib import layers
 
 embedding_size = 128
 
-cnn_feature_size = 128
+cnn_feature_size = 64
 
 sequence_lens = 700
 class_num = 6984
-filter_num = 96
+filter_num = 64
 learning_rate = 0.005
 # fixed size 3
-filter_sizes = [2, 3, 4]
+filter_sizes = [1, 3, 5]
 threshold = 0.2
 
 
@@ -43,12 +43,12 @@ class TextCNN(object):
         with tf.name_scope("CNN_Part"):
             x_convs = tf.nn.dropout(x_convs, self.dropout_keep_prob)
             print('x_convs:', x_convs)
-            # logits_cnn = layers.fully_connected(x_convs, cnn_feature_size,
-            #                                     weights_initializer=tf.truncated_normal_initializer(stddev=0.1),
-            #                                     biases_initializer=tf.truncated_normal_initializer(stddev=0.1),
-            #                                     activation_fn=None)
+            logits_cnn = layers.fully_connected(x_convs, cnn_feature_size,
+                                                weights_initializer=tf.truncated_normal_initializer(stddev=0.1),
+                                                biases_initializer=tf.truncated_normal_initializer(stddev=0.1),
+                                                activation_fn=None)  # tf.nn.relu
 
-            output = layers.fully_connected(x_convs, class_num,
+            output = layers.fully_connected(logits_cnn, class_num,
                                             weights_initializer=tf.truncated_normal_initializer(stddev=0.1),
                                             biases_initializer=tf.truncated_normal_initializer(stddev=0.1),
                                             activation_fn=None)
