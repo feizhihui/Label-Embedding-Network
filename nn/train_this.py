@@ -11,8 +11,8 @@ Reader = data_input.data_master()
 
 learning_rate = 0.005
 batch_size = 256
-epoch_num_cnn = 30
-keep_pro = 0.9
+epoch_num_cnn = 40
+keep_pro = 0.95
 
 model = TextCNN(Reader.embeddings)
 
