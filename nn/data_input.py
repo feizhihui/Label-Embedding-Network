@@ -4,6 +4,8 @@ import numpy as np
 import random
 
 sequence_lens = 700
+label_lens = 7
+
 class_num = 6984
 train_eval_split_line = 0.95863
 shuffle = False
@@ -20,8 +22,11 @@ class data_master:
             all_text = pickle.load(file)
         with open('../PKL/all_code.pkl', 'rb') as file:
             all_code = pickle.load(file)
+        with open('../PKL/label_embedding_matrix.pkl', 'rb') as file:
+            label_embedding_matrix = pickle.load(file)
 
-        self.all_text = self.mapping_sequence(all_text)
+        self.all_text = self.mapping_sequence(all_text, sequence_lens)
+        self.label_x = self.mapping_sequence(label_embedding_matrix, label_lens)
         self.all_code = self.mapping_multi_hot(all_code)
 
         boundary = int(train_eval_split_line * len(all_text))
@@ -44,10 +49,10 @@ class data_master:
         self.train_X = self.train_X[permutation]
         self.train_Y = self.train_Y[permutation]
 
-    def mapping_sequence(self, batch_X):
-        batch_X_matrix = np.zeros([len(batch_X), sequence_lens], dtype=np.int32)
+    def mapping_sequence(self, batch_X, padding_lens):
+        batch_X_matrix = np.zeros([len(batch_X), padding_lens], dtype=np.int32)
         for i, sample in enumerate(batch_X):
-            for j, word in enumerate(sample[:sequence_lens]):
+            for j, word in enumerate(sample[:padding_lens]):
                 token = self.word_dict[word]
                 batch_X_matrix[i, j] = token
         return batch_X_matrix

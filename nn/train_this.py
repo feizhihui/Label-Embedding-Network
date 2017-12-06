@@ -10,8 +10,8 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 Reader = data_input.data_master()
 
 learning_rate = 0.005
-batch_size = 256
-epoch_num_cnn = 40
+batch_size = 128
+epoch_num_cnn = 60
 keep_pro = 0.95
 
 model = TextCNN(Reader.embeddings)
@@ -24,7 +24,8 @@ def validataion():
     for i in range(0, Reader.test_size, batch_size):
         test_X_batch = Reader.test_X[i:i + batch_size]
         output = sess.run(model.prediction_cnn,
-                          feed_dict={model.x: test_X_batch, model.dropout_keep_prob: 1.0})
+                          feed_dict={model.input_x: test_X_batch, model.label_x: Reader.label_x,
+                                     model.dropout_keep_prob: 1.0})
         outputs.append(output)
 
     outputs = np.concatenate(outputs, axis=0)
@@ -41,8 +42,8 @@ def micro_score(output, label):
     total_P = np.sum(output)
     total_R = np.sum(label)
     TP = float(np.sum(output * label))
-    MiP = TP / max(total_P, 1e-12)
-    MiR = TP / max(total_R, 1e-12)
+    MiP = TP / max(total_P, 1e-6)
+    MiR = TP / max(total_R, 1e-6)
     MiF = 2 * MiP * MiR / (MiP + MiR)
     return MiP, MiR, MiF, total_P / N, total_R / N
 
@@ -68,7 +69,8 @@ with tf.Session() as sess:
             batch_X = Reader.train_X[idx:idx + batch_size]
             batch_Y = Reader.train_Y[idx:idx + batch_size]
             loss, output, _ = sess.run([model.loss_cnn, model.prediction_cnn, model.optimizer_cnn],
-                                       feed_dict={model.x: batch_X, model.y: batch_Y,
+                                       feed_dict={model.input_x: batch_X, model.y: batch_Y,
+                                                  model.label_x: Reader.label_x,
                                                   model.dropout_keep_prob: keep_pro, model.lr: lr})
             if iter % 100 == 0:
                 print("===CNNPart===")
