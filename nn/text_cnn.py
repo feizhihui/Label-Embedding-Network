@@ -60,7 +60,7 @@ class TextCNN(object):
             print('input_convs:', input_convs)
 
         with tf.name_scope("Label_CNN_Part"):
-            label_W = tf.Variable(embeddings, name="W", dtype=tf.float32, trainable=False)
+            label_W = tf.Variable(embeddings, name="W", dtype=tf.float32)  # , trainable=False
             label_embeddings = tf.nn.embedding_lookup(label_W, self.label_x)
             label_convs = self.multi_label_conv(label_embeddings, weights2, biases2)
             print('after multiply convolutions: ', label_convs)
