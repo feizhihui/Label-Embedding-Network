@@ -9,10 +9,10 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 Reader = data_input.data_master()
 
-learning_rate = 0.005
-batch_size = 128
+learning_rate = 0.001
+batch_size = 256
 epoch_num_cnn = 70
-keep_pro = 0.5
+keep_pro = 0.9
 
 model = TextCNN(Reader.embeddings)
 
@@ -64,7 +64,7 @@ with tf.Session() as sess:
     print('pretraining CNN Part')
     for epoch in range(epoch_num_cnn):
         Reader.shuffle()
-        lr = learning_rate * (0.95 ** epoch)
+        lr = learning_rate * (0.98 ** epoch)
         for iter, idx in enumerate(range(0, Reader.train_size, batch_size)):
             batch_X = Reader.train_X[idx:idx + batch_size]
             batch_Y = Reader.train_Y[idx:idx + batch_size]

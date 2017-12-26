@@ -59,32 +59,34 @@ class TextCNN(object):
             input_convs = tf.nn.dropout(input_convs, self.dropout_keep_prob)
             print('input_convs:', input_convs)
 
-        with tf.name_scope("Label_CNN_Part"):
-            label_W = tf.Variable(embeddings, name="W", dtype=tf.float32)
-            label_embeddings = tf.nn.embedding_lookup(label_W, self.label_x)
-            label_convs = self.multi_label_conv(label_embeddings, weights2, biases2)
-            print('after multiply convolutions: ', label_convs)
-            label_convs = tf.reshape(label_convs, [-1, 2 * label_filter_num])
-            label_convs = tf.nn.dropout(label_convs, self.dropout_keep_prob)
-            print('label_convs:', label_convs)
-        # tf.tile(C, [1,1,tf.shape(A)[2]])
-        with tf.name_scope("Joint_Part"):
-            # [None,192]=>[None,1,192]
-            input_convs = tf.expand_dims(input_convs, 1)
-            # [None,1,192]=>[None,6984,192]
-            input_convs = tf.tile(input_convs, [1, class_num, 1])
+        # with tf.name_scope("Label_CNN_Part"):
+        #     label_W = tf.Variable(embeddings, name="W", dtype=tf.float32, trainable=False)
+        #     label_embeddings = tf.nn.embedding_lookup(label_W, self.label_x)
+        #     label_convs = self.multi_label_conv(label_embeddings, weights2, biases2)
+        #     print('after multiply convolutions: ', label_convs)
+        #     label_convs = tf.reshape(label_convs, [-1, 2 * label_filter_num])
+        #     label_convs = tf.nn.dropout(label_convs, self.dropout_keep_prob)
+        #     print('label_convs:', label_convs)
 
-            # [6984,48]=>[1,6984,48]
-            label_convs = tf.expand_dims(label_convs, 0)
-            # [1,6984,48]=>[None,6984,48]
-            label_convs = tf.tile(label_convs, [tf.shape(input_convs)[0], 1, 1])
-            # [None,6984,240]
-            fused_tensor = tf.concat([input_convs, label_convs], axis=2)
-            fused_tensor = tf.reshape(fused_tensor, [-1, 2 * label_filter_num + 3 * text_filter_num])
+        # with tf.name_scope("Joint_Part"):
+        #     # [None,192]=>[None,1,192]
+        #     input_convs = tf.expand_dims(input_convs, 1)
+        #     # [None,1,192]=>[None,6984,192]
+        #     input_convs = tf.tile(input_convs, [1, class_num, 1])
+        #
+        #     # [6984,48]=>[1,6984,48]
+        #     label_convs = tf.expand_dims(label_convs, 0)
+        #     # [1,6984,48]=>[None,6984,48]
+        #     label_convs = tf.tile(label_convs, [tf.shape(input_convs)[0], 1, 1])
+        #     # [None,6984,240]
+        #     fused_tensor = tf.concat([input_convs, label_convs], axis=2)
+        #     fused_tensor = tf.reshape(fused_tensor, [-1, 2 * label_filter_num + 3 * text_filter_num])
 
-            output = layers.fully_connected(fused_tensor, 1,
+        with tf.name_scope("Output_Part"):
+            fused_tensor = input_convs
+            output = layers.fully_connected(fused_tensor, class_num,
                                             weights_initializer=tf.truncated_normal_initializer(
-                                                stddev=np.sqrt(2. / (2 * label_filter_num + 3 * text_filter_num))),
+                                                stddev=np.sqrt(2. / (3 * text_filter_num))),
                                             # He_Normalization
                                             biases_initializer=tf.zeros_initializer(),
                                             activation_fn=None)
