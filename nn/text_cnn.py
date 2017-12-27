@@ -11,7 +11,6 @@ label_lens = 7
 
 class_num = 6984
 text_filter_num = 64
-label_filter_num = 32
 
 hidden_size = 64
 
@@ -64,7 +63,7 @@ class TextCNN(object):
             # [n,192]=>[n,64]
             u = layers.fully_connected(input_convs, 2 * hidden_size, activation_fn=tf.nn.tanh,
                                        weights_initializer=tf.truncated_normal_initializer(
-                                           stddev=np.sqrt(2. / (2 * label_filter_num))),
+                                           stddev=np.sqrt(2. / (2 * hidden_size))),
                                        # He_Normalization
                                        biases_initializer=tf.zeros_initializer())
             u = tf.expand_dims(u, 1)  # [n,1,64]
@@ -77,11 +76,18 @@ class TextCNN(object):
             alpha = tf.nn.softmax(tf.reduce_sum(tf.multiply(u, h), axis=2, keep_dims=True), dim=1)  # [n,6984,1]
             atten_label = tf.reduce_sum(tf.multiply(h, alpha), axis=1)  # [n,64]
 
+            atten_label = layers.fully_connected(atten_label, hidden_size,
+                                                 weights_initializer=tf.truncated_normal_initializer(
+                                                     stddev=np.sqrt(2. / (2 * hidden_size))),
+                                                 # He_Normalization
+                                                 biases_initializer=tf.zeros_initializer(),
+                                                 activation_fn=tf.nn.relu)
+
         with tf.name_scope("Output_Part"):
             fused_tensor = tf.concat([atten_label, input_convs], axis=1)
             output = layers.fully_connected(fused_tensor, class_num,
                                             weights_initializer=tf.truncated_normal_initializer(
-                                                stddev=np.sqrt(2. / (3 * text_filter_num))),
+                                                stddev=np.sqrt(2. / (3 * text_filter_num + hidden_size))),
                                             # He_Normalization
                                             biases_initializer=tf.zeros_initializer(),
                                             activation_fn=None)
