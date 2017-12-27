@@ -11,7 +11,8 @@ Reader = data_input.data_master()
 
 learning_rate = 0.001
 batch_size = 256
-epoch_num_cnn = 70
+epoch_num_cnn = 75
+
 keep_pro = 0.9
 
 model = TextCNN(Reader.embeddings)
@@ -78,5 +79,5 @@ with tf.Session() as sess:
                 print("epoch:%d  iter:%d, mean loss:%.3f,  PNum:%.2f, TNum:%.2f" % (
                     epoch + 1, iter + 1, loss, P_NUM, T_NUM))
                 print("Micro-Precision:%.3f, Micro-Recall:%.3f, Micro-F Measure:%.3f" % (MiP, MiR, MiF))
-        if epoch >= 15:
+        if epoch >= epoch_num_cnn / 2:
             validataion()

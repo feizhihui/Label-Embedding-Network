@@ -1,5 +1,6 @@
 # encoding=utf-8
 import tensorflow as tf
+from tensorflow.contrib import rnn
 from tensorflow.contrib import layers
 import numpy as np
 
@@ -10,7 +11,8 @@ label_lens = 7
 
 class_num = 6984
 text_filter_num = 64
-label_filter_num = 32
+
+hidden_size = 64
 
 # fixed size 3
 filter_sizes = [1, 3, 5]
@@ -31,17 +33,7 @@ class TextCNN(object):
             'bc3': tf.Variable(tf.truncated_normal([text_filter_num], stddev=0.1))
         }
 
-        weights2 = {
-            'wc1': tf.Variable(tf.truncated_normal([filter_sizes[0], embedding_size, label_filter_num], stddev=0.1)),
-            'wc2': tf.Variable(tf.truncated_normal([filter_sizes[1], embedding_size, label_filter_num], stddev=0.1))
-        }
-
-        biases2 = {
-            'bc1': tf.Variable(tf.truncated_normal([label_filter_num], stddev=0.1)),
-            'bc2': tf.Variable(tf.truncated_normal([label_filter_num], stddev=0.1))
-        }
         # define placehold
-
 
         self.input_x = tf.placeholder(tf.int32, [None, sequence_lens])
         self.label_x = tf.placeholder(tf.int32, [class_num, label_lens])
@@ -59,27 +51,26 @@ class TextCNN(object):
             input_convs = tf.nn.dropout(input_convs, self.dropout_keep_prob)
             print('input_convs:', input_convs)
 
-        with tf.name_scope("Label_CNN_Part"):
-            label_W = tf.Variable(embeddings, name="W", dtype=tf.float32)  # , trainable=False
+        with tf.name_scope("Label_GRU_Part"):
+            label_W = tf.Variable(embeddings, name="W", dtype=tf.float32, trainable=False)  # , trainable=False
             label_embeddings = tf.nn.embedding_lookup(label_W, self.label_x)
-            label_convs = self.multi_label_conv(label_embeddings, weights2, biases2)
-            print('after multiply convolutions: ', label_convs)
-            label_convs = tf.reshape(label_convs, [-1, 2 * label_filter_num])
-            label_convs = tf.nn.dropout(label_convs, self.dropout_keep_prob)
-            print('label_convs:', label_convs)
+            label_encoder = self.BidirectionalGRUEncoder(label_embeddings, name='label_encoder')
+            label_encoder = self.AttentionLayer(label_encoder, name='sent_attention')
+            label_encoder = tf.nn.dropout(label_encoder, self.dropout_keep_prob)
+            print('label_gru:', label_encoder)
 
         with tf.name_scope("Label_Attention"):
             # [n,192]=>[n,64]
-            u = layers.fully_connected(input_convs, 2 * label_filter_num, activation_fn=tf.nn.tanh,
+            u = layers.fully_connected(input_convs, 2 * hidden_size, activation_fn=tf.nn.tanh,
                                        weights_initializer=tf.truncated_normal_initializer(
-                                           stddev=np.sqrt(2. / (3 * text_filter_num))),
+                                           stddev=np.sqrt(2. / (2 * hidden_size))),
                                        # He_Normalization
                                        biases_initializer=tf.zeros_initializer())
             u = tf.expand_dims(u, 1)  # [n,1,64]
             u = tf.tile(u, [1, class_num, 1])  # [n,6984,64]
 
             # [6984,64]=>[1,6984,64]
-            h = tf.expand_dims(label_convs, 0)
+            h = tf.expand_dims(label_encoder, 0)
             h = tf.tile(h, [tf.shape(input_convs)[0], 1, 1])  # [n,6984,64]
 
             alpha = tf.nn.softmax(tf.reduce_sum(tf.multiply(u, h), axis=2, keep_dims=True), dim=1)  # [n,6984,1]
@@ -89,7 +80,7 @@ class TextCNN(object):
             fused_tensor = tf.concat([atten_label, input_convs], axis=1)
             output = layers.fully_connected(fused_tensor, class_num,
                                             weights_initializer=tf.truncated_normal_initializer(
-                                                stddev=np.sqrt(2. / (3 * text_filter_num))),
+                                                stddev=np.sqrt(2. / (3 * text_filter_num + 2 * hidden_size))),
                                             # He_Normalization
                                             biases_initializer=tf.zeros_initializer(),
                                             activation_fn=None)
@@ -123,10 +114,41 @@ class TextCNN(object):
         convs = tf.concat([conv1, conv2, conv3], 1)
         return convs
 
-    def multi_label_conv(self, x, weights, biases):
-        # Convolution Layer
-        conv1 = self.conv1d(x, weights['wc1'], biases['bc1'], label_lens)
-        conv2 = self.conv1d(x, weights['wc2'], biases['bc2'], label_lens)
-        #  n*time_steps*(3*filter_num)
-        convs = tf.concat([conv1, conv2], 1)
-        return convs
+    def BidirectionalGRUEncoder(self, inputs, name):
+        # 输入inputs的shape是[batch_size*sent_in_doc, word_in_sent, embedding_size]
+        with tf.variable_scope(name):
+            GRU_cell_fw = rnn.GRUCell(hidden_size)
+            GRU_cell_bw = rnn.GRUCell(hidden_size)
+            # fw_outputs和bw_outputs的size都是[batch_size*sent_in_doc, word_in_sent, embedding_size]
+            #  tuple of (outputs, output_states)
+            ((fw_outputs, bw_outputs), (_, _)) = tf.nn.bidirectional_dynamic_rnn(cell_fw=GRU_cell_fw,
+                                                                                 cell_bw=GRU_cell_bw,
+                                                                                 inputs=inputs,
+                                                                                 sequence_length=self.length(inputs),
+                                                                                 dtype=tf.float32)
+            # outputs的size是[batch_size*sent_in_doc, max_time, hidden_size*2]
+            outputs = tf.concat((fw_outputs, bw_outputs), 2)
+            return outputs
+
+    # 输出的状态向量按权值相加
+    def AttentionLayer(self, inputs, name):
+        # inputs是GRU的输出，size是[batch_size, max_time, encoder_size(hidden_size * 2)]
+        with tf.variable_scope(name):
+            # u_context是上下文的重要性向量，用于区分不同单词/句子对于句子/文档的重要程度,
+            # 因为使用双向GRU，所以其长度为2×hidden_szie
+            # 一个context记录了所有的经过全连接后的word或者sentence的权重
+            u_context = tf.Variable(tf.truncated_normal([hidden_size * 2]), name='u_context')
+            # 使用一个全连接层编码GRU的输出的到期隐层表示,输出u的size是[batch_size, max_time, hidden_size * 2]
+            h = layers.fully_connected(inputs, hidden_size * 2, activation_fn=tf.nn.tanh)
+            # alpha shape为[batch_size, max_time, 1]
+            alpha = tf.nn.softmax(tf.reduce_sum(tf.multiply(h, u_context), axis=2, keep_dims=True), dim=1)
+            # reduce_sum之前shape为[batch_szie, max_time, hidden_szie*2]，之后shape为[batch_size, hidden_size*2]
+            atten_output = tf.reduce_sum(tf.multiply(inputs, alpha), axis=1)
+            return atten_output
+
+    def length(self, sequences):
+        # 动态展开
+        used = tf.sign(tf.reduce_max(tf.abs(sequences), reduction_indices=2))
+        seq_len = tf.reduce_sum(used, reduction_indices=1)
+        self.seq_len = tf.cast(seq_len, tf.int32)
+        return self.seq_len
