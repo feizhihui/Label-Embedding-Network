@@ -15,7 +15,7 @@ with open('../DATA/D_ICD_DIAGNOSES.csv', 'r') as file:
     for row_id, colums in enumerate(csv.reader(file)):
         if row_id == 0:
             continue
-        code, description = colums[1], colums[3]
+        code, description = colums[1], ' '.join(colums[2:])
         description = re.sub(r'\(at present\)', ' ', description, flags=re.I)
         description = re.sub(r'\[any form\]', ' ', description, flags=re.I)
         description = re.sub(r'\[|\]|\(|\)', ' ', description, flags=re.I)

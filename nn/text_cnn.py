@@ -7,7 +7,7 @@ import numpy as np
 embedding_size = 128
 
 sequence_lens = 700
-label_lens = 7
+label_lens = 10
 
 class_num = 6984
 text_filter_num = 64
@@ -73,7 +73,9 @@ class TextCNN(object):
             h = tf.expand_dims(label_encoder, 0)
             h = tf.tile(h, [tf.shape(input_convs)[0], 1, 1])  # [n,6984,64]
 
-            alpha = tf.nn.softmax(tf.reduce_sum(tf.multiply(u, h), axis=2, keep_dims=True), dim=1)  # [n,6984,1]
+            attn_weight = tf.reduce_sum(tf.multiply(u, h), axis=2, keep_dims=True)  # [n,6984,1]
+            attn_output = tf.reshape(attn_weight, [-1, class_num])  # similarity
+            alpha = tf.nn.softmax(attn_weight, dim=1)  # [n,6984,1]
             atten_label = tf.reduce_sum(tf.multiply(h, alpha), axis=1)  # [n,64]
 
         with tf.name_scope("Output_Part"):

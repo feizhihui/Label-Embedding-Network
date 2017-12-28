@@ -4,7 +4,7 @@ import numpy as np
 import random
 
 sequence_lens = 700
-label_lens = 7
+label_lens = 10
 
 class_num = 6984
 train_eval_split_line = 0.95863
