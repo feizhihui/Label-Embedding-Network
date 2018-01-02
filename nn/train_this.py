@@ -1,7 +1,7 @@
 # encoding=utf-8
 import tensorflow as tf
 import data_input
-from text_cnn import TextCNN
+from focal_cnn import TextCNN
 import numpy as np
 import os
 
