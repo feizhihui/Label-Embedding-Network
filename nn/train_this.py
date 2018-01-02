@@ -10,7 +10,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 Reader = data_input.data_master()
 
 learning_rate = 0.001
-batch_size = 384  # best 256 0.90  0.98
+batch_size = 256  # best 256 0.90  0.98
 epoch_num_cnn = 70
 
 keep_pro = 0.90
