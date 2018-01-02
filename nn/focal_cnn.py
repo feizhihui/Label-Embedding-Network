@@ -94,12 +94,14 @@ class TextCNN(object):
             # self.loss_cnn = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y, logits=output))
 
             logits = tf.sigmoid(output)
-            pos_loss = a * self.y * tf.pow(1 - logits, r) * tf.log(tf.clip_by_value(logits, 1e-10, 1.0))
-            neg_loss = (1 - a) * (1 - self.y) * tf.pow(logits, r) * tf.log(
-                tf.clip_by_value(1 - logits, 1e-10, 1.0))
-            lfl = -tf.reduce_mean(pos_loss + neg_loss)
+            # pos_loss = a * self.y * tf.pow(1 - logits, r) * tf.log(tf.clip_by_value(logits, 1e-10, 1.0))
+            # neg_loss = (1 - a) * (1 - self.y) * tf.pow(logits, r) * tf.log(
+            #     tf.clip_by_value(1 - logits, 1e-10, 1.0))
+            # lfl = -tf.reduce_mean(pos_loss + neg_loss)
+        self.loss_cnn = -tf.reduce_mean(self.y * tf.log(tf.clip_by_value(logits, 1e-10, 1.0)) + (1 - self.y)(
+            tf.log(tf.clip_by_value(1 - logits, 1e-10, 1.0))))
 
-        self.loss_cnn = lfl
+        # self.loss_cnn = lfl
 
         self.optimizer_cnn = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(self.loss_cnn)
         self.score_cnn = tf.nn.sigmoid(output)
