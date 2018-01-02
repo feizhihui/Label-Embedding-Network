@@ -19,8 +19,8 @@ filter_sizes = [1, 3, 5]
 threshold = 0.2
 
 # focal loss parameters
-alpha = 0.5
-gamma = 2
+a = 0.5
+r = 2
 
 
 class TextCNN(object):
@@ -90,23 +90,22 @@ class TextCNN(object):
                                             # He_Normalization
                                             biases_initializer=tf.zeros_initializer(),
                                             activation_fn=None)
-            # output = tf.reshape(output, [-1, class_num])
+            output = tf.reshape(output, [-1, class_num])
             # self.loss_cnn = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y, logits=output))
 
             logits = tf.sigmoid(output)
+            pos_loss = a * self.y * tf.pow(1 - logits, r) * tf.log(tf.clip_by_value(logits, 1e-10, 1.0))
+            neg_loss = (1 - a) * (1 - self.y) * tf.pow(logits, r) * tf.log(
+                tf.clip_by_value(1 - logits, 1e-10, 1.0))
+            lfl = -tf.reduce_mean(pos_loss + neg_loss)
 
-            lfl = -tf.reduce_mean(
-                alpha * self.y * tf.pow(1 - logits, gamma) * tf.log(tf.clip_by_value(logits, 1e-10, 1.0)) + (
-                    1 - alpha) * (
-                    1 - self.y) * tf.pow(logits, gamma) * tf.log(1 - logits))
+        self.loss_cnn = lfl
 
-            self.loss_cnn = lfl
-
-            self.optimizer_cnn = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(self.loss_cnn)
-            self.score_cnn = tf.nn.sigmoid(output)
-            ones = tf.ones_like(self.score_cnn)
-            zeros = tf.zeros_like(ones)
-            self.prediction_cnn = tf.cast(tf.where(tf.greater(self.score_cnn, threshold), ones, zeros), tf.int32)
+        self.optimizer_cnn = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(self.loss_cnn)
+        self.score_cnn = tf.nn.sigmoid(output)
+        ones = tf.ones_like(self.score_cnn)
+        zeros = tf.zeros_like(ones)
+        self.prediction_cnn = tf.cast(tf.where(tf.greater(self.score_cnn, threshold), ones, zeros), tf.int32)
 
     def conv1d(sef, x, W, b, sample_lens):
         x = tf.reshape(x, shape=[-1, sample_lens, embedding_size])
