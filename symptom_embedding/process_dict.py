@@ -37,3 +37,5 @@ with open('../DATA/symptomList.csv', 'r') as file:
 np.save('../PKL/symptom_matrix.npy', np.array(symptom_matrix, dtype=np.float32))
 with open('../PKL/symptom_dict.pkl', 'wb') as file:
     pickle.dump(symptom_dict, file)
+
+print('total symptom numbers:', len(symptom_dict))

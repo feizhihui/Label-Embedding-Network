@@ -10,10 +10,13 @@ term_pattern = re.compile('[A-Za-z]+')
 
 with open('../PKL/lookup_dict.pkl', 'rb') as file:
     lookup_dict = pickle.load(file)
+with open('../PKL/hadm2symptom.pkl', 'rb') as file:
+    hadm2symptom = pickle.load(file)
 
 # Tokenize and write document counts to file
 all_text = []
 all_code = []
+all_symptom = []
 
 with open('../DATA/MIMIC3_RAW_DSUMS') as file:
     for i, line in enumerate(file.readlines()[1:]):
@@ -32,9 +35,18 @@ with open('../DATA/MIMIC3_RAW_DSUMS') as file:
 
         tokens = [token.lower() for token in re.findall(term_pattern, raw_dsum)]
         tokens = [token for token in tokens if token in lookup_dict]
+
+        ############# symptom embedding
+        hadm = rows[1]
+
+        if not hadm in hadm2symptom or len(hadm2symptom[hadm]) == 0:
+            continue
+        symtoms = hadm2symptom[hadm]
+        print(symtoms)
         if len(tokens) > 0 and len(codes) > 0:
             all_text.append(tokens)
             all_code.append(codes)
+            all_symptom.append(symtoms)
 
 with open('../PKL/all_text.pkl', 'wb') as file:
     pickle.dump(all_text, file)
