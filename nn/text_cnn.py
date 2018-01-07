@@ -87,7 +87,11 @@ class TextCNN(object):
                                             biases_initializer=tf.zeros_initializer(),
                                             activation_fn=None)
             output = tf.reshape(output, [-1, class_num])
-            self.loss_cnn = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y, logits=output))
+            # self.loss_cnn = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y, logits=output))
+            logits = tf.sigmoid(output)
+            self.loss_cnn = -tf.reduce_mean(self.y * tf.log(tf.clip_by_value(logits, 1e-10, 1.0)) + (1 - self.y) * (
+                tf.log(tf.clip_by_value(1 - logits, 1e-10, 1.0))))
+
             self.optimizer_cnn = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(self.loss_cnn)
             self.score_cnn = tf.nn.sigmoid(output)
             ones = tf.ones_like(self.score_cnn)

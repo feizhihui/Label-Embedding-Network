@@ -8,10 +8,11 @@ import data_input
 
 def validataion(scores):
     # model.prediction_fused
-
+    print(scores.shape)
     # search best threshold
     thresholds = search_threshold(scores)
     outputs = infer_by_threshold(scores, threshold=thresholds)
+    # outputs = infer_by_threshold(scores, threshold=0.23)
     print(outputs.shape)
 
     MiP, MiR, MiF, P_NUM, T_NUM = micro_score(outputs, Reader.test_Y)
@@ -31,24 +32,33 @@ def micro_score(output, label):
 
 
 def infer_by_threshold(scores, threshold=0.5):
-    threshold = threshold * np.ones([len(scores), 1])
-    scores = (scores >= threshold).astype(np.int32)
+    threshold = threshold * np.ones([scores.shape[1], 1])
+    scores = (scores >= threshold.T).astype(np.int32)
     return scores
 
 
 def search_threshold(scores):
-    thresholds = np.zeros([scores.shape[0], 1])
-    for i in range(scores.shape[0]):
-        best_t = 0
+    thresholds = 0.2 * np.ones([scores.shape[1], 1])
+    assert len(thresholds) == 6984
+    for i in range(scores.shape[1]):
+        best_t = 0.99
         best_f_score = 0
-        for t in range(1, 99):
+        for t in range(5, 99, 5):
             t = t / 100.
-            f_score = metrics.f1_score(scores[i], Reader.test_Y[i])
-            if best_f_score < f_score:
-                best_f_score = f_score
+            # f_score = metrics.f1_score((scores[:, i] >= t).astype(np.int32), Reader.test_Y[:, i])
+            thresholds[i, 0] = t
+            result = infer_by_threshold(scores, thresholds)
+            achieve = micro_score(result, Reader.test_Y)
+
+            if best_f_score < achieve[2]:
+                best_f_score = achieve[2]
                 best_t = t
         thresholds[i, 0] = best_t
-        print('code %d, threshold %.2f, best f-score %.2f' % (i, best_t, best_f_score))
+        if np.sum(Reader.test_Y[:, i]) == 0:
+            auc = 0
+        else:
+            auc = metrics.roc_auc_score(Reader.test_Y[:, i], scores[:, i])
+        print('code %d, threshold %.2f, best f-score %.4f, AUC %.4f' % (i, best_t, best_f_score, auc))
     return thresholds
 
 

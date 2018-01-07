@@ -12,7 +12,7 @@ Reader = data_input.data_master()
 
 learning_rate = 0.001
 batch_size = 256  # best 256 0.90  0.98   lr=0.001
-epoch_num_cnn = 70  # 75
+epoch_num_cnn = 80  # 75
 
 keep_pro = 0.90
 decay_rate = 0.98
