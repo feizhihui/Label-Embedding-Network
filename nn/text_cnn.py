@@ -10,17 +10,19 @@ sequence_lens = 700
 label_lens = 10
 
 class_num = 6984
+symptom_num = 5915
+
 text_filter_num = 64
 
 hidden_size = 64
 
 # fixed size 3
 filter_sizes = [1, 3, 5]
-threshold = 0.2
+threshold = 0.3  # 0.2
 
 
 class TextCNN(object):
-    def __init__(self, embeddings):
+    def __init__(self, embeddings, sym_embedding):
         weights1 = {
             'wc1': tf.Variable(tf.truncated_normal([filter_sizes[0], embedding_size, text_filter_num], stddev=0.1)),
             'wc2': tf.Variable(tf.truncated_normal([filter_sizes[1], embedding_size, text_filter_num], stddev=0.1)),
@@ -36,6 +38,7 @@ class TextCNN(object):
         # define placehold
 
         self.input_x = tf.placeholder(tf.int32, [None, sequence_lens])
+        self.input_s = tf.placeholder(tf.int32, [None, symptom_num])
         self.label_x = tf.placeholder(tf.int32, [class_num, label_lens])
 
         self.y = tf.placeholder(tf.float32, [None, class_num])
@@ -59,6 +62,18 @@ class TextCNN(object):
             label_encoder = tf.nn.dropout(label_encoder, self.dropout_keep_prob)
             print('label_gru:', label_encoder)
 
+        with tf.name_scope("Symptom_embedding_Part"):
+            symptom_W = tf.Variable(sym_embedding, name="W", dtype=tf.float32, trainable=False)  # , trainable=False
+            # symptom_embeddings = tf.nn.embedding_lookup(symptom_W, self.input_s)
+            symptom_embeddings = tf.matmul(tf.cast(self.input_s, tf.float32), tf.cast(symptom_W, tf.float32))
+            symptom_embeddings = tf.nn.l2_normalize(symptom_embeddings, 1)
+
+            symptom_output = layers.fully_connected(symptom_embeddings, hidden_size, activation_fn=tf.nn.relu,
+                                                    weights_initializer=tf.truncated_normal_initializer(
+                                                        stddev=np.sqrt(2. / embedding_size)),
+                                                    # He_Normalization
+                                                    biases_initializer=tf.zeros_initializer())
+
         with tf.name_scope("Label_Attention"):
             # [n,192]=>[n,64]
             u = layers.fully_connected(input_convs, 2 * hidden_size, activation_fn=tf.nn.tanh,
@@ -79,7 +94,8 @@ class TextCNN(object):
             atten_label = tf.reduce_sum(tf.multiply(h, alpha), axis=1)  # [n,64]
 
         with tf.name_scope("Output_Part"):
-            fused_tensor = tf.concat([atten_label, input_convs], axis=1)
+            # fused_tensor = tf.concat([atten_label, input_convs, symptom_output], axis=1)
+            fused_tensor = tf.concat([symptom_output], axis=1)
             output = layers.fully_connected(fused_tensor, class_num,
                                             weights_initializer=tf.truncated_normal_initializer(
                                                 stddev=np.sqrt(2. / (3 * text_filter_num + 2 * hidden_size))),

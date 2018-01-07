@@ -7,6 +7,8 @@ sequence_lens = 700
 label_lens = 10
 
 class_num = 6984
+symptom_num = 5915
+
 train_eval_split_line = 0.95863
 shuffle = False
 
@@ -14,6 +16,8 @@ shuffle = False
 class data_master:
     def __init__(self):
         self.embeddings = np.load('../PKL/lookup_matrix.npy')
+        self.symptom_matrix = np.load('../PKL/symptom_matrix.npy')
+
         with open('../PKL/lookup_dict.pkl', 'rb') as file:
             self.word_dict = pickle.load(file)
         with open('../PKL/code_dict.pkl', 'rb') as file:
@@ -22,18 +26,29 @@ class data_master:
             all_text = pickle.load(file)
         with open('../PKL/all_code.pkl', 'rb') as file:
             all_code = pickle.load(file)
+
+        ################# label embedding
         with open('../PKL/label_embedding_matrix.pkl', 'rb') as file:
             label_embedding_matrix = pickle.load(file)
+
+        ################ symptom embedding
+        with open('../PKL/all_symptom.pkl', 'rb') as file:
+            all_symptom = pickle.load(file)
+
+        #####################################
 
         self.all_text = self.mapping_sequence(all_text, sequence_lens)
         self.label_x = self.mapping_sequence(label_embedding_matrix, label_lens)
         self.all_code = self.mapping_multi_hot(all_code)
+        self.all_symptom = self.mapping_multi_sym(all_symptom)
 
         boundary = int(train_eval_split_line * len(all_text))
         self.train_X = self.all_text[:boundary]
+        self.train_S = self.all_symptom[:boundary]
         self.train_Y = self.all_code[:boundary]
 
         self.test_X = self.all_text[boundary:]
+        self.test_S = self.all_symptom[boundary:]
         self.test_Y = self.all_code[boundary:]
 
         self.train_size = boundary
@@ -47,6 +62,7 @@ class data_master:
         permutation = list(range(self.train_size))
         random.shuffle(permutation)
         self.train_X = self.train_X[permutation]
+        self.train_S = self.all_symptom[permutation]
         self.train_Y = self.train_Y[permutation]
 
     def mapping_sequence(self, batch_X, padding_lens):
@@ -65,6 +81,13 @@ class data_master:
                 batch_Y_matrix[i, code] = 1
 
         return batch_Y_matrix
+
+    def mapping_multi_sym(self, batch_S):
+        symtom_matrix = np.zeros([len(batch_S), symptom_num], dtype=np.int32)
+        for i, sym_set in enumerate(batch_S):
+            for sym in sym_set:
+                symtom_matrix[i, sym] = 1
+        return symtom_matrix
 
 
 if __name__ == '__main__':

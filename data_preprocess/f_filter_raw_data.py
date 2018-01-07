@@ -52,6 +52,8 @@ with open('../PKL/all_text.pkl', 'wb') as file:
     pickle.dump(all_text, file)
 with open('../PKL/all_code.pkl', 'wb') as file:
     pickle.dump(all_code, file)
+with open('../PKL/all_symptom.pkl', 'wb') as file:
+    pickle.dump(all_symptom, file)
 
 print(max([len(text) for text in all_text]))
 print(min([len(text) for text in all_text]))

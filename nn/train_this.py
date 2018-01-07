@@ -1,22 +1,22 @@
 # encoding=utf-8
 import tensorflow as tf
 import data_input
-from focal_cnn import TextCNN
+from text_cnn import TextCNN
 import numpy as np
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 Reader = data_input.data_master()
 
-learning_rate = 0.001
+learning_rate = 0.1
 batch_size = 256  # best 256 0.90  0.98   lr=0.001
-epoch_num_cnn = 75
+epoch_num_cnn = 20  # 75
 
 keep_pro = 0.90
 decay_rate = 0.98
 
-model = TextCNN(Reader.embeddings)
+model = TextCNN(Reader.embeddings, Reader.symptom_matrix)
 
 
 def validataion():
@@ -25,8 +25,10 @@ def validataion():
     outputs = []
     for i in range(0, Reader.test_size, batch_size):
         test_X_batch = Reader.test_X[i:i + batch_size]
+        test_S_batch = Reader.test_S[i:i + batch_size]
         output = sess.run(model.prediction_cnn,
                           feed_dict={model.input_x: test_X_batch, model.label_x: Reader.label_x,
+                                     model.input_s: test_S_batch,
                                      model.dropout_keep_prob: 1.0})
         outputs.append(output)
 
@@ -46,7 +48,7 @@ def micro_score(output, label):
     TP = float(np.sum(output * label))
     MiP = TP / max(total_P, 1e-6)
     MiR = TP / max(total_R, 1e-6)
-    MiF = 2 * MiP * MiR / (MiP + MiR)
+    MiF = 2 * MiP * MiR / max(MiP + MiR, 1e-6)
     return MiP, MiR, MiF, total_P / N, total_R / N
 
 
@@ -63,15 +65,15 @@ def macro_score(output, label):
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
 
-    print('pretraining CNN Part')
     for epoch in range(epoch_num_cnn):
         Reader.shuffle()
         lr = learning_rate * (decay_rate ** epoch)
         for iter, idx in enumerate(range(0, Reader.train_size, batch_size)):
             batch_X = Reader.train_X[idx:idx + batch_size]
+            batch_S = Reader.train_S[idx:idx + batch_size]
             batch_Y = Reader.train_Y[idx:idx + batch_size]
             loss, output, _ = sess.run([model.loss_cnn, model.prediction_cnn, model.optimizer_cnn],
-                                       feed_dict={model.input_x: batch_X, model.y: batch_Y,
+                                       feed_dict={model.input_x: batch_X, model.input_s: batch_S, model.y: batch_Y,
                                                   model.label_x: Reader.label_x,
                                                   model.dropout_keep_prob: keep_pro, model.lr: lr})
             if iter % 100 == 0:
