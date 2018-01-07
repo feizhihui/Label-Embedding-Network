@@ -31,6 +31,25 @@ def micro_score(output, label):
     return MiP, MiR, MiF, total_P / N, total_R / N
 
 
+def fast_micro_score(total_p, total_r, total_tp):
+    N = len(total_p)
+    total_P = np.sum(total_p)
+    total_R = np.sum(total_r)
+    TP = float(np.sum(total_tp))
+    MiP = TP / max(total_P, 1e-6)
+    MiR = TP / max(total_R, 1e-6)
+    MiF = 2 * MiP * MiR / max(MiP + MiR, 1e-6)
+    return MiP, MiR, MiF, total_P / N, total_R / N
+
+
+def change_result(label, pred, threshold):
+    pred = (pred >= threshold).astype(np.int32)
+    p = np.sum(pred)
+    r = np.sum(label)
+    tp = np.sum(label * pred)
+    return p, r, tp
+
+
 def infer_by_threshold(scores, threshold=0.5):
     threshold = threshold * np.ones([scores.shape[1], 1])
     scores = (scores >= threshold.T).astype(np.int32)
@@ -40,9 +59,10 @@ def infer_by_threshold(scores, threshold=0.5):
 def search_threshold(scores):
     thresholds = 0.2 * np.ones([scores.shape[1], 1])
     assert len(thresholds) == 6984
-    
-
-
+    result = infer_by_threshold(scores, thresholds)
+    total_p = np.sum(result, axis=0)
+    total_r = np.sum(Reader.test_Y, axis=0)
+    total_tp = np.sum(result * Reader.test_Y, axis=0)
 
     for i in range(scores.shape[1]):
         best_t = 0.99
@@ -51,12 +71,17 @@ def search_threshold(scores):
             t = t / 100.
             # f_score = metrics.f1_score((scores[:, i] >= t).astype(np.int32), Reader.test_Y[:, i])
             thresholds[i, 0] = t
-            result = infer_by_threshold(scores, thresholds)
-            achieve = micro_score(result, Reader.test_Y)
+            # result = infer_by_threshold(scores, thresholds)
+            # achieve = micro_score(result, Reader.test_Y)
+
+            total_p[i], total_r[i], total_tp[i] = change_result(Reader.test_Y[:, i], scores[:, i], t)
+            achieve = fast_micro_score(total_p, total_r, total_tp)
 
             if best_f_score < achieve[2]:
                 best_f_score = achieve[2]
                 best_t = t
+                p, r, tp = total_p[i], total_r[i], total_tp[i]
+        total_p[i], total_r[i], total_tp[i] = p, r, tp
         thresholds[i, 0] = best_t
         if np.sum(Reader.test_Y[:, i]) == 0:
             auc = 0
