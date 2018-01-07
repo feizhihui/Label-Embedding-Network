@@ -40,6 +40,10 @@ def infer_by_threshold(scores, threshold=0.5):
 def search_threshold(scores):
     thresholds = 0.2 * np.ones([scores.shape[1], 1])
     assert len(thresholds) == 6984
+    
+
+
+
     for i in range(scores.shape[1]):
         best_t = 0.99
         best_f_score = 0
