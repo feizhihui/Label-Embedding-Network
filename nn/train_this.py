@@ -4,6 +4,7 @@ import data_input
 from focal_cnn import TextCNN
 import numpy as np
 import os
+import pickle
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
@@ -11,7 +12,7 @@ Reader = data_input.data_master()
 
 learning_rate = 0.001
 batch_size = 256  # best 256 0.90  0.98   lr=0.001
-epoch_num_cnn = 75
+epoch_num_cnn = 70  # 75
 
 keep_pro = 0.90
 decay_rate = 0.98
@@ -19,16 +20,18 @@ decay_rate = 0.98
 model = TextCNN(Reader.embeddings)
 
 
-def validataion():
+def validataion(localize=False):
     # model.prediction_fused
     print('begin to test:')
     outputs = []
+    scores = []
     for i in range(0, Reader.test_size, batch_size):
         test_X_batch = Reader.test_X[i:i + batch_size]
-        output = sess.run(model.prediction_cnn,
-                          feed_dict={model.input_x: test_X_batch, model.label_x: Reader.label_x,
-                                     model.dropout_keep_prob: 1.0})
+        output, score = sess.run([model.prediction_cnn, model.score_cnn],
+                                 feed_dict={model.input_x: test_X_batch, model.label_x: Reader.label_x,
+                                            model.dropout_keep_prob: 1.0})
         outputs.append(output)
+        scores.append(score)
 
     outputs = np.concatenate(outputs, axis=0)
 
@@ -37,6 +40,9 @@ def validataion():
     print(">>>>>> Micro-Precision:%.3f, Micro-Recall:%.3f, Micro-F Measure:%.3f" % (MiP, MiR, MiF))
     # MaP, MaR, MaF = macro_score(outputs, test_labels)
     # print(">>>>>> Macro-Precision:%.3f, Macro-Recall:%.3f, Macro-F Measure:%.3f" % (MaP, MaR, MaF))
+    if localize:
+        with open('../PKL/scores.pkl', 'wb') as file:
+            pickle.dump(scores, file)
 
 
 def micro_score(output, label):
@@ -81,4 +87,7 @@ with tf.Session() as sess:
                     epoch + 1, iter + 1, loss, P_NUM, T_NUM))
                 print("Micro-Precision:%.3f, Micro-Recall:%.3f, Micro-F Measure:%.3f" % (MiP, MiR, MiF))
         if epoch >= epoch_num_cnn / 3:
-            validataion()
+            if epoch < epoch_num_cnn - 1:
+                validataion()
+            else:
+                validataion(localize=True)
