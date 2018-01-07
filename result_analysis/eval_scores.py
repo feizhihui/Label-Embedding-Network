@@ -11,6 +11,7 @@ def validataion(scores):
     print(scores.shape)
     # search best threshold
     thresholds = search_threshold(scores)
+    thresholds = search_threshold(scores, thresholds)
     outputs = infer_by_threshold(scores, threshold=thresholds)
     # outputs = infer_by_threshold(scores, threshold=0.23)
     print(outputs.shape)
@@ -56,8 +57,8 @@ def infer_by_threshold(scores, threshold=0.5):
     return scores
 
 
-def search_threshold(scores):
-    thresholds = 0.2 * np.ones([scores.shape[1], 1])
+def search_threshold(scores, threshold=0.2):
+    thresholds = threshold * np.ones([scores.shape[1], 1])
     assert len(thresholds) == 6984
     result = infer_by_threshold(scores, thresholds)
     total_p = np.sum(result, axis=0)
@@ -67,8 +68,8 @@ def search_threshold(scores):
     for i in range(scores.shape[1]):
         best_t = 0.99
         best_f_score = 0
-        for t in range(5, 99, 5):
-            t = t / 100.
+        for t in range(0, 1000, 1):
+            t = t / 1000.
             # f_score = metrics.f1_score((scores[:, i] >= t).astype(np.int32), Reader.test_Y[:, i])
             thresholds[i, 0] = t
             # result = infer_by_threshold(scores, thresholds)
