@@ -8,7 +8,10 @@ import data_input
 
 def validataion(scores):
     # model.prediction_fused
-    outputs = infer_by_threshold(scores, threshold=0.2)
+
+    # search best threshold
+    thresholds = search_threshold(scores)
+    outputs = infer_by_threshold(scores, threshold=thresholds)
     print(outputs.shape)
 
     MiP, MiR, MiF, P_NUM, T_NUM = micro_score(outputs, Reader.test_Y)
@@ -31,6 +34,22 @@ def infer_by_threshold(scores, threshold=0.5):
     threshold = threshold * np.ones([len(scores), 1])
     scores = (scores >= threshold).astype(np.int32)
     return scores
+
+
+def search_threshold(scores):
+    thresholds = np.zeros([scores.shape[0], 1])
+    for i in range(scores.shape[0]):
+        best_t = 0
+        best_f_score = 0
+        for t in range(1, 99):
+            t = t / 100.
+            f_score = metrics.f1_score(scores[i], Reader.test_Y[i])
+            if best_f_score < f_score:
+                best_f_score = f_score
+                best_t = t
+        thresholds[i, 0] = best_t
+        print('code %d, threshold %.2f, best f-score %.2f' % (i, best_t, best_f_score))
+    return thresholds
 
 
 Reader = data_input.data_master()
