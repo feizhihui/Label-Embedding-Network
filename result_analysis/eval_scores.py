@@ -57,7 +57,7 @@ def infer_by_threshold(scores, threshold=0.5):
     return scores
 
 
-def search_threshold(scores, threshold=0.2):
+def search_threshold(scores, threshold=0.5):
     thresholds = threshold * np.ones([scores.shape[1], 1])
     assert len(thresholds) == 6984
     result = infer_by_threshold(scores, thresholds)
@@ -68,7 +68,7 @@ def search_threshold(scores, threshold=0.2):
     for i in range(scores.shape[1]):
         best_t = 0.99
         best_f_score = 0
-        for t in range(0, 1000, 1):
+        for t in range(0, 1000, 10):
             t = t / 1000.
             # f_score = metrics.f1_score((scores[:, i] >= t).astype(np.int32), Reader.test_Y[:, i])
             thresholds[i, 0] = t
@@ -88,7 +88,7 @@ def search_threshold(scores, threshold=0.2):
             auc = 0
         else:
             auc = metrics.roc_auc_score(Reader.test_Y[:, i], scores[:, i])
-        print('code %d, threshold %.2f, best f-score %.4f, AUC %.4f' % (i, best_t, best_f_score, auc))
+        print('code %d, threshold %.3f, best f-score %.4f, AUC %.4f' % (i, best_t, best_f_score, auc))
     return thresholds
 
 
