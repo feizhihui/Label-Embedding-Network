@@ -18,7 +18,7 @@ all_code = []
 with open('../DATA/MIMIC3_RAW_DSUMS') as file:
     for i, line in enumerate(file.readlines()[1:]):
         rows = line.split('|')
-        raw_dsum = rows[6]
+        raw_dsum = rows[6].strip('"')
         codes = rows[5].strip('"').split(',')
         raw_dsum = re.sub(r'\[[^\]]+\]', ' ', raw_dsum)
         raw_dsum = re.sub(r'admission date:', ' ', raw_dsum, flags=re.I)
